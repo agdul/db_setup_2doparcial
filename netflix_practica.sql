@@ -146,9 +146,9 @@ WHERE sd.id_director IS NULL;
 -- Mostrar todo los actores de las pelicula 
 -- | PELI |   |ACTORES|  --
 
-SELECT s.titulo AS 'Peli / Serie', STRING_AGG (a.nombre_apellido, ',') AS 'ACTOR'
-FROM elenco e 
-INNER JOIN actor a ON e.id_actor = a.id_actor
+SELECT s.titulo AS 'Peli / Serie', STRING_AGG (a.nombre_apellido, ', ') AS 'ACTOR'
+FROM actor a
+INNER JOIN elenco e ON a.id_actor = e.id_actor
 INNER JOIN show s ON e.id_show = s.id_show
 GROUP BY  s.titulo
 ORDER BY 'Peli / Serie'
@@ -161,3 +161,127 @@ INNER JOIN actor a ON e.id_actor = a.id_actor
 INNER JOIN show s ON e.id_show = s.id_show
 GROUP BY a.nombre_apellido, s.titulo
 ORDER BY 'Peli / Serie'
+
+------------------------------------------------------------------------------------------------
+--  Todos los shows que no tienen una categoría asignada
+
+SELECT * 
+FROM show s
+FULL JOIN show_categoria sc ON s.id_show = sc.id_show
+FULL JOIN categoria c ON c.id_categoria = sc.id_categoria
+WHERE c.id_categoria is NULL
+
+SELECT s.titulo
+FROM show s 
+LEFT JOIN show_categoria sc ON s.id_show = sc.id_show
+WHERE sc.id_categoria is NULL
+
+
+-- CORRECTO 
+
+SELECT titulo
+FROM show
+LEFT JOIN show_categoria sc ON show.id_show = sc.id_show
+WHERE sc.id_categoria IS NULL
+
+
+------------------------------------------------------------------------------------------------
+-- muestra el número total de shows por cada año de lanzamiento
+
+SELECT COUNT(s.id_show) as 'Catidad de pelis', s.año_lanzamiento 
+FROM show s 
+GROUP BY s.año_lanzamiento 
+
+
+------------------------------------------------------------------------------------------------
+--  muestra el total de shows agrupados por tipo y categoría
+
+SELECT ts.descripcion AS'Tipo - categoria', c.descripcion AS 'Categoria', COUNT(s.id_show) AS 'Toltal show'
+FROM categoria c 
+INNER JOIN show_categoria sc ON c.id_categoria = sc.id_categoria
+INNER JOIN show s ON sc.id_show = s.id_show
+INNER JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
+GROUP BY ts.descripcion, c.descripcion
+ORDER BY 'Toltal show' DESC
+
+
+--Correcto 
+SELECT tipo_show.descripcion, categoria.descripcion, COUNT(show.id_show) AS 'TotalShows'
+FROM show
+INNER JOIN tipo_show ON show.id_tipo = tipo_show.id_tipo
+INNER JOIN show_categoria ON show.id_show = show_categoria.id_show
+INNER JOIN categoria ON show_categoria.id_categoria = categoria.id_categoria
+GROUP BY tipo_show.descripcion, categoria.descripcion
+ORDER BY 'TotalShows' DESC
+
+------------------------------------------------------------------------------------------------
+-- Encuentra los shows con una duración promedio de episodios mayor a 40 minutos.
+
+SELECT * FROM show
+
+SELECT titulo, duracion
+FROM show
+WHERE duracion > '40 min'
+
+------------------------------------------------------------------------------------------------
+-- Encuentra el promedio de actores por show en cada categoría.
+
+-- SELECT c.descripcion, AVG(a.id_actor) AS 'Promedio de actores'
+-- FROM actor a 
+-- INNER JOIN elenco e ON a.id_actor = e.id_actor 
+-- INNER JOIN show s ON e.id_show = s.id_show
+-- INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+-- INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+-- GROUP BY c.descripcion
+
+
+-- SELECT c.descripcion, AVG(a.id_actor) AS 'Promedio de actores'
+-- FROM actor a 
+-- INNER JOIN elenco e ON a.id_actor = e.id_actor 
+-- INNER JOIN show s ON e.id_show = s.id_show
+-- INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+-- INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+-- WHERE c.id_categoria = 23
+-- GROUP BY sc.id_categoria, c.descripcion
+
+SELECT 
+    c.descripcion AS "Categoria", 
+    COUNT(e.id_actor) / COUNT(DISTINCT s.id_show) AS "Promedio de Actores"
+FROM show s
+INNER JOIN elenco e ON s.id_show = e.id_show
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+GROUP BY c.descripcion;
+
+
+
+
+SELECT 
+    c.descripcion AS "Categoria", 
+    AVG(CantidadActores) AS "Promedio de Actores"
+FROM (
+    SELECT 
+        sc.id_categoria, 
+        s.id_show, 
+        COUNT(e.id_actor) AS "CantidadActores"
+    FROM show s
+    INNER JOIN elenco e ON s.id_show = e.id_show
+    INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+    GROUP BY sc.id_categoria, s.id_show
+) AS ActoresPorShow
+INNER JOIN categoria c ON ActoresPorShow.id_categoria = c.id_categoria
+GROUP BY c.descripcion;
+
+
+
+
+
+
+
+
+
+
+
+SELECT DISTINCT * 
+FROM categoria
+WHERE descripcion Like ('Mus%')
