@@ -89,4 +89,75 @@ INNER JOIN show s ON sp.id_show = s.id_show
 WHERE p.id_pais = 116 
 
 
+-------------------------------------------------------------------------------------------------
 
+-- Categoria del show con mas elenco
+SELECT * FROM categoria
+
+
+SELECT s.titulo AS 'Peli / Serie', COUNT(a.id_actor) AS 'CAntidad de Actores'
+FROM elenco e 
+INNER JOIN actor a ON e.id_actor = a.id_actor
+INNER JOIN show s ON e.id_show = s.id_show
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+GROUP BY s.titulo
+
+
+SELECT c.descripcion AS "Categoria", s.titulo AS "Peli / Serie", COUNT(e.id_actor) AS "Cantidad de Actores"
+FROM elenco e
+INNER JOIN show s ON e.id_show = s.id_show
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+GROUP BY c.descripcion, s.id_show, s.titulo
+HAVING 
+    s.id_show = (
+        SELECT TOP 1 e.id_show
+        FROM elenco e
+        GROUP BY e.id_show
+        ORDER BY COUNT(e.id_actor) DESC
+    )
+ORDER BY 
+    "Cantidad de Actores" DESC;
+
+-- En este caso, estamos usando HAVING para filtrar el show que tiene el mayor elenco. Primero se agrupa el id_show y se cuenta la cantidad de actores en cada show. Luego, HAVING te permite filtrar para que solo se muestre el show que tiene el id_show con el mayor número de actores, encontrado con la subconsulta.
+
+
+-------------------------------------------------------------------------------------------------
+
+--  Todos los directores que no han dirigido ningún show
+
+SELECT nombre_apellido , s.titulo
+FROM show_director sd 
+FULL OUTER JOIN director d ON sd.id_director = d.id_director
+FULL OUTER JOIN show s ON sd.id_show = s.id_show
+WHERE s.titulo IS NULL
+
+
+-- Correcto angau 
+
+SELECT d.nombre_apellido
+FROM director d
+LEFT JOIN show_director sd ON d.id_director = sd.id_director
+WHERE sd.id_director IS NULL;
+
+
+------------------------------------------------------------------------------------------------
+-- Mostrar todo los actores de las pelicula 
+-- | PELI |   |ACTORES|  --
+
+SELECT s.titulo AS 'Peli / Serie', STRING_AGG (a.nombre_apellido, ',') AS 'ACTOR'
+FROM elenco e 
+INNER JOIN actor a ON e.id_actor = a.id_actor
+INNER JOIN show s ON e.id_show = s.id_show
+GROUP BY  s.titulo
+ORDER BY 'Peli / Serie'
+
+
+
+SELECT s.titulo AS 'Peli / Serie', a.nombre_apellido AS 'ACTOR'
+FROM elenco e 
+INNER JOIN actor a ON e.id_actor = a.id_actor
+INNER JOIN show s ON e.id_show = s.id_show
+GROUP BY a.nombre_apellido, s.titulo
+ORDER BY 'Peli / Serie'
