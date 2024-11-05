@@ -52,4 +52,41 @@ WHERE sd.id_director = 2960;
 
 
 
---
+-------------------------------------------------------------------------------------------------
+-- Que pelicula se hizo en la mayor cantidad de paises y su rating y su elenco
+
+
+SELECT * FROM rating
+SELECT * FROM pais 
+WHERE descripcion LIKE 'Uni%' 
+
+SELECT p.descripcion
+FROM show_pais sp
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+INNER JOIN show s ON sp.id_show = s.id_show 
+GROUP BY p.descripcion
+
+-------------------------------------------------------------------------------------------------
+
+-- En que pais se realizo mas pelicualas 
+
+
+SELECT p.descripcion, COUNT(s.id_show) AS 'Cantidad de pelis'
+FROM show_pais sp
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+INNER JOIN show s ON sp.id_show = s.id_show 
+GROUP BY p.descripcion
+ORDER BY 'Cantidad de pelis' DESC
+
+-------------------------------------------------------------------------------------------------
+
+-- ID US = 116 LAs pelis que corresponden a ese id
+
+SELECT p.descripcion, s.titulo
+FROM show_pais sp
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+INNER JOIN show s ON sp.id_show = s.id_show 
+WHERE p.id_pais = 116 
+
+
+
