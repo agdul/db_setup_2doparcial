@@ -383,7 +383,6 @@ SELECT COUNT( s.id_show) AS 'show  con categorias'
 FROM show s
 INNER JOIN show_categoria sc ON s.id_show = sc.id_show --19323
 
-
 ------------------------------------------------------------------------------------------------
 
 -- Motrar los show con sus respectivos pais
@@ -415,3 +414,126 @@ FULL JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
 FULL JOIN elenco e ON s.id_show = e.id_show
 FULL JOIN actor a ON e.id_actor = a.id_actor
 GROUP BY s.titulo, s.fecha_salida, s.duracion, p.descripcion, c.descripcion, ts.descripcion, d.nombre_apellido
+
+------------------------------------------------------------------------------------------------
+----Cantidad de shows por director y su pais correspondiente que tengan al menos un show
+
+SELECT d.nombre_apellido AS 'Directores', p.descripcion AS 'Pais', COUNT(DISTINCT s.id_show) AS 'Cantidad de show' 
+FROM show s
+INNER JOIN show_director sd ON s.id_show = sd.id_show
+INNER JOIN director d ON sd.id_director = d.id_director 
+INNER JOIN show_pais sp ON s.id_show = sp.id_show
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+GROUP BY d.nombre_apellido, p.descripcion
+HAVING COUNT(sd.id_show) > 1
+ORDER BY 'Cantidad de show' DESC
+
+------------------------------------------------------------------------------------------------
+-----Muestra la cantidad de shows por tipo y año de lanzamiento, en países donde no se registraron directores.
+
+select año_lanzamiento,
+       COUNT(case when id_tipo = 1 then 1 end) AS 'Cantidad pelis',
+       COUNT(case when id_tipo = 2 then 1 end) AS 'Cantidad serie'
+from show s
+FULL JOIN show_director sd ON s.id_show = sd.id_show 
+WHERE sd.id_director is NULL
+GROUP BY año_lanzamiento
+
+
+
+
+
+select COUNT(case when id_tipo = 1 then 1 end) AS 'Cantidad pelis',
+       COUNT(case when id_tipo = 2 then 1 end) AS 'Cantidad serie'
+from show
+
+
+SELECT * FROM show
+
+SELECT ts.descripcion, s.año_lanzamiento 
+FROM show s 
+INNER JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
+INNER JOIN show_pais sp ON s.id_show = sp.id_show
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+FULL JOIN show_director sd ON s.id_show = sd.id_director
+GROUP BY ts.descripcion, s.año_lanzamiento
+
+SELECT COUNT(id_show) 
+FROM show s 
+INNER JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
+WHERE ts.id_tipo = 1
+
+SELECT COUNT(id_show) 
+FROM show s 
+INNER JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
+WHERE ts.id_tipo = 2
+
+
+
+------------------------------------------------------------------------------------------------
+----Encuentra los actores que participan en shows que están clasificados en más de una categoría. Muestra el nombre del actor y el título del show.
+
+
+SELECT c.descripcion as 'Categoria', a.nombre_apellido as 'Actor', s.titulo
+FROM show s
+INNER JOIN elenco e ON s.id_show = e.id_show
+INNER JOIN actor a ON e.id_actor = a.id_actor
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+GROUP BY c.descripcion, a.nombre_apellido, s.titulo
+HAVING COUNT(c.id_categoria) > 1
+
+------------------------------------------------------------------------------------------------
+---Cantidad de shows dirigidos por director que hayan dirgido mas de 3 shows y ademas que sea el año actual
+
+-- Encuentra los directores que hayan trabajado en más de 2 shows
+SELECT 
+    d.nombre_apellido AS "Director", 
+    COUNT(sd.id_show) AS "Cantidad de Shows"
+FROM show_director sd
+INNER JOIN director d ON sd.id_director = d.id_director
+INNER JOIN show s ON sd.id_show = s.id_show
+--WHERE YEAR(s.año_lanzamiento) IN (2010 , 2018)
+GROUP BY d.nombre_apellido
+HAVING COUNT(sd.id_show) >= 1
+ORDER BY "Cantidad de Shows" DESC
+
+
+select * FROM categoria 
+
+SELECT a.nombre_apellido AS actor, s.titulo AS show
+FROM actor a
+INNER JOIN elenco e ON a.id_actor = e.id_actor
+INNER JOIN show s ON e.id_show = s.id_show
+WHERE s.id_show IN (
+    SELECT id_show ----Encuentra los actores que participan en shows que están clasificados en más de una categoría. Muestra el nombre del actor y el título del show.
+    FROM show_categoria
+    GROUP BY id_show
+    HAVING COUNT(id_categoria) > 1
+)
+------------------------------------------------------------------------------------------------
+-- Cantidad de catigorias por show
+SELECT 
+    s.id_show, 
+    COUNT(sc.id_categoria) AS "Cantidad de Categorías"
+FROM show s
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show
+INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
+GROUP BY s.id_show
+HAVING COUNT(sc.id_categoria) > 1; 
+
+------------------------------------------------------------------------------------------------
+--Actores con mas de un show en el mismo pais
+
+SELECT 
+    a.nombre_apellido AS "Actor", 
+    p.descripcion AS "País", 
+    COUNT(s.id_show) AS "Cantidad de Shows"
+FROM elenco e
+INNER JOIN actor a ON e.id_actor = a.id_actor
+INNER JOIN show s ON e.id_show = s.id_show
+INNER JOIN show_pais sp ON s.id_show = sp.id_show
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+GROUP BY a.nombre_apellido, p.descripcion
+HAVING COUNT(s.id_show) > 1
+ORDER BY "Cantidad de Shows" DESC;
