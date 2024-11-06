@@ -49,12 +49,8 @@ INNER JOIN director d ON sd.id_director = d.id_director
 INNER JOIN categoria c ON sc.id_categoria = c.id_categoria
 WHERE sd.id_director = 2960;
 
-
-
-
 -------------------------------------------------------------------------------------------------
 -- Que pelicula se hizo en la mayor cantidad de paises y su rating y su elenco
-
 
 SELECT * FROM rating
 SELECT * FROM pais 
@@ -70,7 +66,6 @@ GROUP BY p.descripcion
 
 -- En que pais se realizo mas pelicualas 
 
-
 SELECT p.descripcion, COUNT(s.id_show) AS 'Cantidad de pelis'
 FROM show_pais sp
 INNER JOIN pais p ON sp.id_pais = p.id_pais
@@ -79,7 +74,6 @@ GROUP BY p.descripcion
 ORDER BY 'Cantidad de pelis' DESC
 
 -------------------------------------------------------------------------------------------------
-
 -- ID US = 116 LAs pelis que corresponden a ese id
 
 SELECT p.descripcion, s.titulo
@@ -87,7 +81,6 @@ FROM show_pais sp
 INNER JOIN pais p ON sp.id_pais = p.id_pais
 INNER JOIN show s ON sp.id_show = s.id_show 
 WHERE p.id_pais = 116 
-
 
 -------------------------------------------------------------------------------------------------
 
@@ -257,7 +250,7 @@ GROUP BY c.descripcion;
 SELECT 
     c.descripcion AS "Categoria", 
     AVG(CantidadActores) AS "Promedio de Actores"
-FROM (
+FROM ( -- tabla derivada cuando esta en el from
     SELECT sc.id_categoria, s.id_show, COUNT(e.id_actor) AS "CantidadActores"
     FROM show s
     INNER JOIN elenco e ON s.id_show = e.id_show
@@ -304,13 +297,25 @@ having count(sp.id_pais)>1
 order by count(sp.id_pais) desc 
 
 ------------------------------------------------------------------------------------------------
-
 -- ¿Cuántos actores únicos aparecen en cada show?
-
 SELECT s.titulo AS "Peli / Serie", COUNT(DISTINCT e.id_actor) AS "Actores Únicos"
 FROM elenco e
 INNER JOIN show s ON e.id_show = s.id_show
 GROUP BY s.id_show, s.titulo;
+
+
+------------------------------------------------------------------------------------------------
+
+-- ¿Cuántos actores únicos aparecen en un solo show ?
+SELECT COUNT(a.id_actor)AS 'Actores que  participaron en una sola pelicula'
+FROM actor a
+INNER JOIN elenco e ON a.id_actor = e.id_actor
+WHERE a.id_actor IN( SELECT a.id_actor -- Esto es una sub consulta porque esta dentro del WHERE
+    FROM actor a
+    INNER JOIN elenco e ON a.id_actor = e.id_actor
+    GROUP BY a.id_actor
+    HAVING COUNT(e.id_show) =1)
+
 
 ------------------------------------------------------------------------------------------------
 -- Encuentra el número de shows dirigidos por cada director en cada categoría.
@@ -337,7 +342,6 @@ GROUP BY c.descripcion;
 
 ------------------------------------------------------------------------------------------------
 -- Lista los títulos de los shows que tienen más de 3 actores.
-
 SELECT s.titulo AS "Peli / Serie"
 FROM elenco e
 INNER JOIN show s ON e.id_show = s.id_show
@@ -346,7 +350,6 @@ HAVING COUNT(e.id_actor) > 3;
 
 ------------------------------------------------------------------------------------------------
 -- Encuentra los directores que hayan trabajado en más de 2 shows
-
 SELECT 
     d.nombre_apellido AS "Director", 
     COUNT(sd.id_show) AS "Cantidad de Shows"
@@ -355,3 +358,60 @@ INNER JOIN director d ON sd.id_director = d.id_director
 GROUP BY d.nombre_apellido
 HAVING COUNT(sd.id_show) >= 2
 ORDER BY "Cantidad de Shows" DESC
+
+------------------------------------------------------------------------------------------------
+--Cantidad de show distintos
+SELECT COUNT(DISTINCT id_show) FROM show --8807
+
+--CUantos show asignados a un pais
+SELECT COUNT( s.id_show) AS 'show asignados a un pais'
+FROM show s
+INNER JOIN show_pais sp ON s.id_show = sp.id_show  --10012
+
+--CUantos show distintos asignados a un pais
+SELECT COUNT(DISTINCT  s.id_show) AS 'show distintos asignados a un pais'
+FROM show s
+INNER JOIN show_pais sp ON s.id_show = sp.id_show --7976
+
+--CUantos show distintos con categorias
+SELECT COUNT(DISTINCT  s.id_show) AS 'show distintos con categorias'
+FROM show s 
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show --8807
+
+--CUantos show  con categorias
+SELECT COUNT( s.id_show) AS 'show  con categorias'
+FROM show s
+INNER JOIN show_categoria sc ON s.id_show = sc.id_show --19323
+
+
+------------------------------------------------------------------------------------------------
+
+-- Motrar los show con sus respectivos pais
+SELECT p.descripcion AS 'Pais', s.titulo AS 'Peli / Serie '
+FROM show_pais sp 
+INNER JOIN pais p ON sp.id_pais = p.id_pais
+INNER JOIN show s ON sp.id_show = s.id_show
+GROUP BY p.descripcion, s.titulo 
+------------------------------------------------------------------------------------------------
+
+-- Mostrar todo los actores tengan o no shows
+SELECT * 
+FROM actor a
+FULL JOIN elenco sd ON a.id_actor = sd.id_actor
+FULL JOIN show s ON sd.id_show = s.id_show
+WHERE a.id_actor is NULL AND s.fecha_salida is NULL
+
+------------------------------------------------------------------------------------------------
+-- Mostrar los Show con sus respectivos directo pais categoria tipo show rating elenco (BASICAMENTE MOSTRAR TODO)
+SELECT s.titulo, s.fecha_salida, s.duracion, p.descripcion, c.descripcion, ts.descripcion, d.nombre_apellido AS 'Director',STRING_AGG (a.nombre_apellido, ', ') AS 'ACTOR' -- Verificar que todos los campos dedeados esten 
+FROM show s 
+FULL JOIN show_director sd ON s.id_show = sd.id_show
+FULL JOIN director d ON sd.id_director = d.id_director
+FULL JOIN show_pais sp ON s.id_show = sp.id_show
+FULL JOIN pais p ON sp.id_pais = p.id_pais
+FULL JOIN show_categoria sc ON s.id_show = sc.id_show
+FULL JOIN categoria c ON sc.id_categoria = c.id_categoria
+FULL JOIN tipo_show ts ON s.id_tipo = ts.id_tipo
+FULL JOIN elenco e ON s.id_show = e.id_show
+FULL JOIN actor a ON e.id_actor = a.id_actor
+GROUP BY s.titulo, s.fecha_salida, s.duracion, p.descripcion, c.descripcion, ts.descripcion, d.nombre_apellido
